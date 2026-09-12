@@ -174,8 +174,28 @@
     gap:16px;
   }
   #now-playing{display:flex;align-items:center;gap:10px;overflow:hidden;}
-  #np-video-wrap{width:96px;height:54px;background:#000;flex-shrink:0;overflow:hidden;}
+  #np-video-wrap{
+    position:relative;width:96px;height:54px;background:#000;flex-shrink:0;overflow:hidden;
+    transition:width .18s ease, height .18s ease;
+  }
   #np-video-wrap iframe{width:100%;height:100%;display:block;}
+  #np-video-wrap.expanded{
+    position:fixed;right:16px;bottom:88px;
+    width:320px;height:180px;
+    z-index:30;
+    border:1px solid var(--line);
+    box-shadow:0 12px 32px rgba(0,0,0,.55);
+  }
+  #expand-toggle{
+    position:absolute;top:4px;right:4px;z-index:2;
+    width:20px;height:20px;
+    background:rgba(0,0,0,.65);color:#fff;
+    font-size:11px;line-height:1;
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;transition:opacity .15s;
+  }
+  #np-video-wrap:hover #expand-toggle,
+  #np-video-wrap.expanded #expand-toggle{opacity:1;}
   #now-playing .np-text{overflow:hidden;}
   #now-playing .np-title{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   #now-playing .np-artist{font-size:11px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -215,6 +235,7 @@
     #player-bar{grid-template-columns:1fr;grid-template-rows:auto auto;padding:8px 12px;gap:6px;height:auto;}
     #volume-row{display:none;}
     #np-video-wrap{width:64px;height:36px;}
+    #np-video-wrap.expanded{width:240px;height:135px;right:8px;bottom:96px;}
   }
 </style>
 </head>
@@ -253,7 +274,10 @@
 
   <div id="player-bar" class="hidden">
     <div id="now-playing">
-      <div id="np-video-wrap"><div id="yt-player-mount"></div></div>
+      <div id="np-video-wrap">
+        <div id="yt-player-mount"></div>
+        <button id="expand-toggle" title="映像を拡大/縮小">⤢</button>
+      </div>
       <div class="np-text">
         <div class="np-title" id="np-title">再生していません</div>
         <div class="np-artist" id="np-artist"></div>
@@ -292,13 +316,10 @@ import {
 
 // ---- Firebaseコンソール > プロジェクトの設定 > マイアプリ から取得した設定値をここに入れる ----
 const firebaseConfig = {
-  apiKey: "AIzaSyAC0-9XrzUGajNUY4arbHGzMt3ALbyjDbs",
-  authDomain: "a4l-f5-si.firebaseapp.com",
-  projectId: "a4l-f5-si",
-  storageBucket: "a4l-f5-si.firebasestorage.app",
-  messagingSenderId: "1067513157556",
-  appId: "1:1067513157556:web:38ea17c9a54391775644e1",
-  measurementId: "G-C3PH30YJBT"
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  appId: "YOUR_FIREBASE_APP_ID",
 };
 // -----------------------------------------------------------------------------------------
 
@@ -462,10 +483,21 @@ function escapeHtml(s){
   }[c]));
 }
 
-// ---------------- Sidebar: playlists + liked videos ----------------
+// ---------------- Sidebar: recommendations + playlists + liked videos ----------------
 async function loadPlaylists(){
   const $pl = el("playlists");
   $pl.innerHTML = "";
+
+  const recBtn = document.createElement("button");
+  recBtn.className = "pl-item active";
+  recBtn.textContent = "おすすめ";
+  recBtn.addEventListener("click", () => {
+    document.querySelectorAll(".pl-item").forEach(b=>b.classList.remove("active"));
+    recBtn.classList.add("active");
+    loadRecommendations();
+    closeSidebarOnMobile();
+  });
+  $pl.appendChild(recBtn);
 
   const likedBtn = document.createElement("button");
   likedBtn.className = "pl-item";
