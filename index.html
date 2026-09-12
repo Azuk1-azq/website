@@ -1,1152 +1,715 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SpotLightning</title>
-  <style>
-    :root {
-      --bg: #0A0A0F;
-      --surface: #131319;
-      --surface-hi: #1B1B24;
-      --line: #25252F;
-      --text: #E8E8ED;
-      --text-dim: #8B8B99;
-      --accent: #E4FF3C;
-      --accent-2: #7B61FF;
-      --danger: #FF5C5C;
-      --radius: 2px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html,
-    body {
-      height: 100%;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      overflow: hidden;
-      font-size: 14px;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    button {
-      font: inherit;
-      color: inherit;
-      background: none;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:disabled {
-      opacity: .35;
-      cursor: default;
-    }
-
-    input {
-      font: inherit;
-      color: inherit;
-    }
-
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--line);
-    }
-
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    /* ---------- App shell ---------- */
-    #app {
-      display: grid;
-      grid-template-columns: 220px 1fr;
-      grid-template-rows: 1fr 72px;
-      height: 100vh;
-    }
-
-    #app.no-sidebar {
-      grid-template-columns: 0 1fr;
-    }
-
-    /* ---------- Brand mark ---------- */
-    .bolt {
-      display: inline-block;
-      width: 14px;
-      height: 18px;
-      clip-path: polygon(60% 0%, 0% 58%, 42% 58%, 30% 100%, 100% 40%, 55% 40%);
-      background: var(--accent);
-      flex-shrink: 0;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 18px 16px;
-      letter-spacing: .02em;
-      font-weight: 600;
-      font-size: 15px;
-    }
-
-    /* ---------- Sidebar ---------- */
-    #sidebar {
-      background: var(--surface);
-      border-right: 1px solid var(--line);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    #playlists {
-      flex: 1;
-      overflow-y: auto;
-      padding: 4px 0 12px;
-    }
-
-    .pl-item {
-      display: block;
-      width: 100%;
-      text-align: left;
-      padding: 9px 16px;
-      color: var(--text-dim);
-      border-left: 2px solid transparent;
-      font-size: 13px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .pl-item:hover {
-      color: var(--text);
-      background: var(--surface-hi);
-    }
-
-    .pl-item.active {
-      color: var(--text);
-      border-left-color: var(--accent);
-      background: var(--surface-hi);
-    }
-
-    .sidebar-section-label {
-      padding: 14px 16px 6px;
-      font-size: 11px;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: .08em;
-    }
-
-    .account-box {
-      padding: 12px 16px;
-      border-top: 1px solid var(--line);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .account-box img {
-      width: 24px;
-      height: 24px;
-      object-fit: cover;
-      flex-shrink: 0;
-    }
-
-    .account-box .name {
-      font-size: 12px;
-      color: var(--text-dim);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      flex: 1;
-    }
-
-    .logout-btn {
-      color: var(--text-dim);
-      font-size: 11px;
-      text-decoration: underline;
-      flex-shrink: 0;
-    }
-
-    .logout-btn:hover {
-      color: var(--text);
-    }
-
-    /* ---------- Main ---------- */
-    #main {
-      overflow-y: auto;
-      padding: 0 28px 28px;
-    }
-
-    #topbar {
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      background: linear-gradient(var(--bg) 70%, transparent);
-      padding: 18px 0 14px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    #menu-toggle {
-      display: none;
-      width: 32px;
-      height: 32px;
-      color: var(--text-dim);
-      font-size: 18px;
-    }
-
-    #search-form {
-      flex: 1;
-      display: flex;
-    }
-
-    #search-input {
-      width: 100%;
-      max-width: 420px;
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 9px 12px;
-      color: var(--text);
-    }
-
-    #search-input:focus {
-      outline: none;
-      border-color: var(--accent-2);
-    }
-
-    #search-input::placeholder {
-      color: var(--text-dim);
-    }
-
-    h1.view-title {
-      font-size: 20px;
-      font-weight: 600;
-      margin: 6px 0 16px;
-    }
-
-    .hint-row {
-      color: var(--text-dim);
-      font-size: 12px;
-      margin-bottom: 16px;
-    }
-
-    #login-screen {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      text-align: center;
-      grid-column: 1/-1;
-      grid-row: 1/-1;
-    }
-
-    #login-screen .bolt {
-      width: 34px;
-      height: 44px;
-    }
-
-    #login-screen h1 {
-      font-size: 24px;
-      font-weight: 600;
-      letter-spacing: .01em;
-    }
-
-    #login-screen p {
-      color: var(--text-dim);
-      max-width: 340px;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    #login-btn {
-      background: var(--accent);
-      color: #0A0A0F;
-      font-weight: 600;
-      padding: 11px 28px;
-      border-radius: var(--radius);
-      font-size: 13px;
-    }
-
-    #login-btn:hover {
-      background: #eeff70;
-    }
-
-    #config-warning {
-      color: var(--danger);
-      font-size: 12px;
-      max-width: 360px;
-      line-height: 1.6;
-      border: 1px solid var(--danger);
-      padding: 10px 14px;
-    }
-
-    table.track-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    table.track-table th {
-      text-align: left;
-      color: var(--text-dim);
-      font-weight: 500;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-      padding: 6px 10px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    table.track-table td {
-      padding: 0;
-    }
-
-    .track-row {
-      display: grid;
-      grid-template-columns: 32px 1fr 1fr 60px;
-      align-items: center;
-      padding: 7px 10px;
-      border-radius: var(--radius);
-      cursor: pointer;
-    }
-
-    .track-row:hover {
-      background: var(--surface-hi);
-    }
-
-    .track-row.playing .t-title {
-      color: var(--accent);
-    }
-
-    .track-row .t-num {
-      color: var(--text-dim);
-      font-size: 12px;
-    }
-
-    .track-row .t-art {
-      width: 32px;
-      height: 32px;
-      object-fit: cover;
-      margin-right: 10px;
-    }
-
-    .track-row .t-main {
-      display: flex;
-      align-items: center;
-      overflow: hidden;
-    }
-
-    .track-row .t-text {
-      overflow: hidden;
-    }
-
-    .t-title {
-      font-size: 13px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .t-artist {
-      font-size: 12px;
-      color: var(--text-dim);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .t-album {
-      color: var(--text-dim);
-      font-size: 12px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .t-dur {
-      color: var(--text-dim);
-      font-size: 12px;
-      text-align: right;
-    }
-
-    .empty-state {
-      color: var(--text-dim);
-      font-size: 13px;
-      padding: 40px 10px;
-      text-align: center;
-      line-height: 1.7;
-    }
-
-    .empty-state strong {
-      color: var(--text);
-      display: block;
-      font-size: 15px;
-      margin-bottom: 6px;
-      font-weight: 600;
-    }
-
-    .banner {
-      border: 1px solid var(--danger);
-      color: var(--danger);
-      padding: 10px 14px;
-      font-size: 12px;
-      margin-bottom: 16px;
-      line-height: 1.6;
-    }
-
-    /* ---------- Player bar ---------- */
-    #player-bar {
-      grid-column: 1/-1;
-      background: var(--surface);
-      border-top: 1px solid var(--line);
-      display: grid;
-      grid-template-columns: 220px 1fr 200px;
-      align-items: center;
-      padding: 0 16px;
-      gap: 16px;
-    }
-
-    #now-playing {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      overflow: hidden;
-    }
-
-    #now-playing img {
-      width: 44px;
-      height: 44px;
-      object-fit: cover;
-      background: var(--surface-hi);
-      flex-shrink: 0;
-    }
-
-    #now-playing .np-text {
-      overflow: hidden;
-    }
-
-    #now-playing .np-title {
-      font-size: 13px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    #now-playing .np-artist {
-      font-size: 11px;
-      color: var(--text-dim);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    #transport {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-    }
-
-    #transport-buttons {
-      display: flex;
-      align-items: center;
-      gap: 18px;
-    }
-
-    #transport-buttons button {
-      color: var(--text);
-      font-size: 16px;
-    }
-
-    #transport-buttons button:hover {
-      color: var(--accent);
-    }
-
-    #play-btn {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      background: var(--text);
-      color: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-    }
-
-    #play-btn:hover {
-      background: var(--accent);
-    }
-
-    #progress-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      width: 100%;
-      max-width: 480px;
-    }
-
-    #progress-row span {
-      font-size: 10px;
-      color: var(--text-dim);
-      width: 32px;
-    }
-
-    #progress-row span:last-child {
-      text-align: right;
-    }
-
-    #seek {
-      flex: 1;
-      -webkit-appearance: none;
-      height: 3px;
-      background: var(--line);
-      border-radius: 2px;
-      outline: none;
-    }
-
-    #seek::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--text);
-    }
-
-    #seek::-moz-range-thumb {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--text);
-      border: none;
-    }
-
-    #volume-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      justify-self: end;
-    }
-
-    #volume-row span {
-      font-size: 14px;
-      color: var(--text-dim);
-    }
-
-    #volume {
-      width: 90px;
-      -webkit-appearance: none;
-      height: 3px;
-      background: var(--line);
-      border-radius: 2px;
-    }
-
-    #volume::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--text-dim);
-    }
-
-    #volume::-moz-range-thumb {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--text-dim);
-      border: none;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    @media (max-width:760px) {
-      #app {
-        grid-template-columns: 1fr;
-      }
-
-      #sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        bottom: 72px;
-        width: 220px;
-        z-index: 20;
-        transform: translateX(-100%);
-        transition: transform .18s ease;
-      }
-
-      #sidebar.open {
-        transform: translateX(0);
-      }
-
-      #menu-toggle {
-        display: block;
-      }
-
-      #player-bar {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto;
-        padding: 8px 12px;
-        gap: 6px;
-      }
-
-      #volume-row {
-        display: none;
-      }
-
-      #now-playing {
-        display: none;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpotLightning</title>
+<style>
+  :root{
+    --bg:#0A0A0F;
+    --surface:#131319;
+    --surface-hi:#1B1B24;
+    --line:#25252F;
+    --text:#E8E8ED;
+    --text-dim:#8B8B99;
+    --accent:#E4FF3C;
+    --accent-2:#7B61FF;
+    --danger:#FF5C5C;
+    --radius:2px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    overflow:hidden;
+    font-size:14px;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;}
+  button:disabled{opacity:.35;cursor:default;}
+  input{font:inherit;color:inherit;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  #app{
+    display:grid;
+    grid-template-columns:220px 1fr;
+    grid-template-rows:1fr 72px;
+    height:100vh;
+  }
+
+  .bolt{
+    display:inline-block;
+    width:14px;height:18px;
+    clip-path:polygon(60% 0%, 0% 58%, 42% 58%, 30% 100%, 100% 40%, 55% 40%);
+    background:var(--accent);
+    flex-shrink:0;
+  }
+  .brand{
+    display:flex;align-items:center;gap:8px;
+    padding:18px 16px;
+    letter-spacing:.02em;
+    font-weight:600;
+    font-size:15px;
+  }
+
+  #sidebar{
+    background:var(--surface);
+    border-right:1px solid var(--line);
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+  #playlists{
+    flex:1;overflow-y:auto;
+    padding:4px 0 12px;
+  }
+  .pl-item{
+    display:block;width:100%;text-align:left;
+    padding:9px 16px;
+    color:var(--text-dim);
+    border-left:2px solid transparent;
+    font-size:13px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .pl-item:hover{color:var(--text);background:var(--surface-hi);}
+  .pl-item.active{color:var(--text);border-left-color:var(--accent);background:var(--surface-hi);}
+  .sidebar-section-label{
+    padding:14px 16px 6px;
+    font-size:11px;color:var(--text-dim);
+    text-transform:uppercase;letter-spacing:.08em;
+  }
+  .account-box{
+    padding:12px 16px;
+    border-top:1px solid var(--line);
+    display:flex;align-items:center;gap:8px;
+  }
+  .account-box img{width:24px;height:24px;object-fit:cover;flex-shrink:0;border-radius:50%;}
+  .account-box .name{font-size:12px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+  .logout-btn{color:var(--text-dim);font-size:11px;text-decoration:underline;flex-shrink:0;}
+  .logout-btn:hover{color:var(--text);}
+
+  #main{
+    overflow-y:auto;
+    padding:0 28px 28px;
+  }
+  #topbar{
+    position:sticky;top:0;z-index:5;
+    background:linear-gradient(var(--bg) 70%, transparent);
+    padding:18px 0 14px;
+    display:flex;align-items:center;gap:12px;
+  }
+  #menu-toggle{
+    display:none;
+    width:32px;height:32px;
+    color:var(--text-dim);
+    font-size:18px;
+  }
+  #search-form{flex:1;display:flex;}
+  #search-input{
+    width:100%;max-width:420px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:9px 12px;
+    color:var(--text);
+  }
+  #search-input:focus{outline:none;border-color:var(--accent-2);}
+  #search-input::placeholder{color:var(--text-dim);}
+
+  h1.view-title{font-size:20px;font-weight:600;margin:6px 0 16px;}
+  .hint-row{color:var(--text-dim);font-size:12px;margin-bottom:16px;}
+
+  #login-screen{
+    height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;
+    grid-column:1/-1;grid-row:1/-1;
+  }
+  #login-screen .bolt{width:34px;height:44px;}
+  #login-screen h1{font-size:24px;font-weight:600;letter-spacing:.01em;}
+  #login-screen p{color:var(--text-dim);max-width:340px;font-size:13px;line-height:1.6;}
+  #login-btn{
+    background:var(--accent);color:#0A0A0F;font-weight:600;
+    padding:11px 28px;border-radius:var(--radius);
+    font-size:13px;
+  }
+  #login-btn:hover{background:#eeff70;}
+  #config-warning{
+    color:var(--danger);font-size:12px;max-width:360px;line-height:1.6;
+    border:1px solid var(--danger);padding:10px 14px;
+  }
+
+  .track-row{
+    display:grid;grid-template-columns:32px 1fr 60px;align-items:center;
+    padding:7px 10px;border-radius:var(--radius);cursor:pointer;
+  }
+  .track-row:hover{background:var(--surface-hi);}
+  .track-row.playing .t-title{color:var(--accent);}
+  .track-row .t-num{color:var(--text-dim);font-size:12px;}
+  .track-row .t-art{width:32px;height:32px;object-fit:cover;margin-right:10px;}
+  .track-row .t-main{display:flex;align-items:center;overflow:hidden;}
+  .track-row .t-text{overflow:hidden;}
+  .t-title{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .t-artist{font-size:12px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .t-dur{color:var(--text-dim);font-size:12px;text-align:right;}
+
+  .empty-state{
+    color:var(--text-dim);font-size:13px;padding:40px 10px;text-align:center;line-height:1.7;
+  }
+  .empty-state strong{color:var(--text);display:block;font-size:15px;margin-bottom:6px;font-weight:600;}
+
+  .banner{
+    border:1px solid var(--danger);color:var(--danger);
+    padding:10px 14px;font-size:12px;margin-bottom:16px;line-height:1.6;
+  }
+
+  #player-bar{
+    grid-column:1/-1;
+    background:var(--surface);
+    border-top:1px solid var(--line);
+    display:grid;grid-template-columns:240px 1fr 200px;
+    align-items:center;
+    padding:0 16px;
+    gap:16px;
+  }
+  #now-playing{display:flex;align-items:center;gap:10px;overflow:hidden;}
+  #np-video-wrap{width:96px;height:54px;background:#000;flex-shrink:0;overflow:hidden;}
+  #np-video-wrap iframe{width:100%;height:100%;display:block;}
+  #now-playing .np-text{overflow:hidden;}
+  #now-playing .np-title{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #now-playing .np-artist{font-size:11px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+  #transport{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  #transport-buttons{display:flex;align-items:center;gap:18px;}
+  #transport-buttons button{color:var(--text);font-size:16px;}
+  #transport-buttons button:hover{color:var(--accent);}
+  #play-btn{
+    width:30px;height:30px;border-radius:50%;background:var(--text);color:var(--bg);
+    display:flex;align-items:center;justify-content:center;font-size:13px;
+  }
+  #play-btn:hover{background:var(--accent);}
+  #progress-row{display:flex;align-items:center;gap:8px;width:100%;max-width:480px;}
+  #progress-row span{font-size:10px;color:var(--text-dim);width:32px;}
+  #progress-row span:last-child{text-align:right;}
+  #seek{flex:1;-webkit-appearance:none;height:3px;background:var(--line);border-radius:2px;outline:none;}
+  #seek::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:var(--text);}
+  #seek::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:var(--text);border:none;}
+
+  #volume-row{display:flex;align-items:center;gap:8px;justify-self:end;}
+  #volume-row span{font-size:14px;color:var(--text-dim);}
+  #volume{width:90px;-webkit-appearance:none;height:3px;background:var(--line);border-radius:2px;}
+  #volume::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:9px;border-radius:50%;background:var(--text-dim);}
+  #volume::-moz-range-thumb{width:9px;height:9px;border-radius:50%;background:var(--text-dim);border:none;}
+
+  .hidden{display:none !important;}
+
+  @media (max-width:760px){
+    #app{grid-template-columns:1fr;}
+    #sidebar{
+      position:fixed;top:0;left:0;bottom:72px;width:220px;z-index:20;
+      transform:translateX(-100%);transition:transform .18s ease;
+    }
+    #sidebar.open{transform:translateX(0);}
+    #menu-toggle{display:block;}
+    #player-bar{grid-template-columns:1fr;grid-template-rows:auto auto;padding:8px 12px;gap:6px;height:auto;}
+    #volume-row{display:none;}
+    #np-video-wrap{width:64px;height:36px;}
+  }
+</style>
 </head>
-
 <body>
 
-  <div id="app">
+<div id="app">
 
-    <!-- ===== Login screen ===== -->
-    <div id="login-screen">
-      <span class="bolt"></span>
-      <h1>SpotLightning</h1>
-      <p>軽量なSpotify代替クライアント。再生にはSpotify Premiumアカウントが必要です。</p>
-      <div id="config-warning" class="hidden"></div>
-      <button id="login-btn">Spotifyでログイン</button>
-    </div>
-
-    <!-- ===== Sidebar ===== -->
-    <div id="sidebar" class="hidden">
-      <div class="brand"><span class="bolt"></span>SpotLightning</div>
-      <div class="sidebar-section-label">プレイリスト</div>
-      <div id="playlists"></div>
-      <div class="account-box">
-        <img id="user-avatar" src="" alt="">
-        <div class="name" id="user-name">-</div>
-        <button class="logout-btn" id="logout-btn">ログアウト</button>
-      </div>
-    </div>
-
-    <!-- ===== Main ===== -->
-    <div id="main" class="hidden">
-      <div id="topbar">
-        <button id="menu-toggle">≡</button>
-        <form id="search-form">
-          <input id="search-input" type="text" placeholder="曲・アーティストを検索" autocomplete="off">
-        </form>
-      </div>
-      <div id="view"></div>
-    </div>
-
-    <!-- ===== Player bar ===== -->
-    <div id="player-bar" class="hidden">
-      <div id="now-playing">
-        <img id="np-art" src="" alt="">
-        <div class="np-text">
-          <div class="np-title" id="np-title">再生していません</div>
-          <div class="np-artist" id="np-artist"></div>
-        </div>
-      </div>
-      <div id="transport">
-        <div id="transport-buttons">
-          <button id="prev-btn" title="前へ">⏮</button>
-          <button id="play-btn" title="再生/一時停止">▶</button>
-          <button id="next-btn" title="次へ">⏭</button>
-        </div>
-        <div id="progress-row">
-          <span id="time-cur">0:00</span>
-          <input id="seek" type="range" min="0" max="1000" value="0">
-          <span id="time-dur">0:00</span>
-        </div>
-      </div>
-      <div id="volume-row">
-        <span>♪</span>
-        <input id="volume" type="range" min="0" max="100" value="50">
-      </div>
-    </div>
-
+  <div id="login-screen">
+    <span class="bolt"></span>
+    <h1>SpotLightning</h1>
+    <p>軽量なYouTube Music代替クライアント。Googleアカウントでログインすると、あなたのプレイリストと高評価した動画を再生できます。</p>
+    <div id="config-warning" class="hidden"></div>
+    <button id="login-btn">Googleでログイン</button>
   </div>
 
-  <script>
-    (function () {
-      "use strict";
-
-      /* =========================================================
-         SpotLightning
-         軽量Spotifyクライアント — Authorization Code + PKCE / Web Playback SDK
-         外部ライブラリ・Webフォント不使用(起動速度優先)
-         ========================================================= */
-
-      // ---- ここにSpotify Developer Dashboardで発行したClient IDを入れる ----
-      const CLIENT_ID = "7a13715bdd014812905317c7d2abba61";
-      // -----------------------------------------------------------------
-
-      const REDIRECT_URI = window.location.origin + window.location.pathname;
-      const SCOPES = [
-        "streaming",
-        "user-read-email",
-        "user-read-private",
-        "user-read-playback-state",
-        "user-modify-playback-state",
-        "playlist-read-private",
-        "playlist-read-collaborative",
-        "user-library-read"
-      ].join(" ");
-
-      const LS_TOKEN = "sl_token";
-      const LS_VERIFIER = "sl_verifier";
-
-      let state = {
-        accessToken: null,
-        refreshToken: null,
-        expiresAt: 0,
-        player: null,
-        deviceId: null,
-        currentTrack: null,
-        isPaused: true,
-        positionMs: 0,
-        durationMs: 0,
-        seeking: false,
-      };
-
-      // ---------------- DOM refs ----------------
-      const el = (id) => document.getElementById(id);
-      const $app = el("app");
-      const $loginScreen = el("login-screen");
-      const $sidebar = el("sidebar");
-      const $main = el("main");
-      const $playerBar = el("player-bar");
-      const $view = el("view");
-
-      // ---------------- PKCE helpers ----------------
-      function randomString(len) {
-        const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        let out = "";
-        const arr = crypto.getRandomValues(new Uint8Array(len));
-        for (let i = 0; i < len; i++) out += chars[arr[i] % chars.length];
-        return out;
-      }
-      async function sha256Base64Url(text) {
-        const data = new TextEncoder().encode(text);
-        const digest = await crypto.subtle.digest("SHA-256", data);
-        let str = "";
-        const bytes = new Uint8Array(digest);
-        for (let i = 0; i < bytes.length; i++) str += String.fromCharCode(bytes[i]);
-        return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-      }
-
-      async function beginLogin() {
-        if (!CLIENT_ID || CLIENT_ID === "YOUR_SPOTIFY_CLIENT_ID") {
-          const w = el("config-warning");
-          w.textContent = "Client IDが未設定です。コード内のCLIENT_IDにSpotify Developer DashboardのClient IDを設定してください。";
-          w.classList.remove("hidden");
-          return;
-        }
-        const verifier = randomString(64);
-        localStorage.setItem(LS_VERIFIER, verifier);
-        const challenge = await sha256Base64Url(verifier);
-        const params = new URLSearchParams({
-          client_id: CLIENT_ID,
-          response_type: "code",
-          redirect_uri: REDIRECT_URI,
-          scope: SCOPES,
-          code_challenge_method: "S256",
-          code_challenge: challenge,
-        });
-        window.location.href = "https://accounts.spotify.com/authorize?" + params.toString();
-      }
-
-      async function exchangeCodeForToken(code) {
-        const verifier = localStorage.getItem(LS_VERIFIER);
-        const body = new URLSearchParams({
-          client_id: CLIENT_ID,
-          grant_type: "authorization_code",
-          code,
-          redirect_uri: REDIRECT_URI,
-          code_verifier: verifier,
-        });
-        const res = await fetch("https://accounts.spotify.com/api/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body,
-        });
-        if (!res.ok) throw new Error("token exchange failed");
-        return res.json();
-      }
-
-      async function refreshAccessToken() {
-        if (!state.refreshToken) return false;
-        const body = new URLSearchParams({
-          client_id: CLIENT_ID,
-          grant_type: "refresh_token",
-          refresh_token: state.refreshToken,
-        });
-        const res = await fetch("https://accounts.spotify.com/api/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body,
-        });
-        if (!res.ok) return false;
-        const data = await res.json();
-        storeToken(data.access_token, data.refresh_token || state.refreshToken, data.expires_in);
-        return true;
-      }
-
-      function storeToken(access, refresh, expiresIn) {
-        state.accessToken = access;
-        state.refreshToken = refresh;
-        state.expiresAt = Date.now() + (expiresIn * 1000) - 60000;
-        localStorage.setItem(LS_TOKEN, JSON.stringify({
-          access, refresh, expiresAt: state.expiresAt
-        }));
-      }
-
-      function loadStoredToken() {
-        try {
-          const raw = localStorage.getItem(LS_TOKEN);
-          if (!raw) return false;
-          const data = JSON.parse(raw);
-          state.accessToken = data.access;
-          state.refreshToken = data.refresh;
-          state.expiresAt = data.expiresAt;
-          return true;
-        } catch (e) { return false; }
-      }
-
-      async function ensureFreshToken() {
-        if (Date.now() >= state.expiresAt) {
-          const ok = await refreshAccessToken();
-          if (!ok) { logout(); throw new Error("再認証が必要です"); }
-        }
-      }
-
-      function logout() {
-        localStorage.removeItem(LS_TOKEN);
-        localStorage.removeItem(LS_VERIFIER);
-        window.location.href = REDIRECT_URI;
-      }
-
-      // ---------------- Spotify Web API ----------------
-      async function api(path, opts = {}) {
-        await ensureFreshToken();
-        const res = await fetch("https://api.spotify.com/v1" + path, {
-          ...opts,
-          headers: {
-            "Authorization": "Bearer " + state.accessToken,
-            "Content-Type": "application/json",
-            ...(opts.headers || {}),
-          },
-        });
-        if (res.status === 204) return null;
-        if (!res.ok) {
-          const txt = await res.text().catch(() => "");
-          throw new Error("API error " + res.status + " " + txt);
-        }
-        const ct = res.headers.get("content-type") || "";
-        return ct.includes("application/json") ? res.json() : null;
-      }
-
-      // ---------------- UI: shell ----------------
-      function showApp() {
-        $loginScreen.classList.add("hidden");
-        $sidebar.classList.remove("hidden");
-        $main.classList.remove("hidden");
-        $playerBar.classList.remove("hidden");
-      }
-
-      function fmtTime(ms) {
-        if (!ms || ms < 0) ms = 0;
-        const totalSec = Math.floor(ms / 1000);
-        const m = Math.floor(totalSec / 60);
-        const s = totalSec % 60;
-        return m + ":" + String(s).padStart(2, "0");
-      }
-
-      function renderEmpty(title, body) {
-        $view.innerHTML = `<div class="empty-state"><strong>${title}</strong>${body}</div>`;
-      }
-
-      function renderBanner(msg) {
-        return `<div class="banner">${msg}</div>`;
-      }
-
-      // ---------------- Playlists ----------------
-      async function loadPlaylists() {
-        try {
-          const data = await api("/me/playlists?limit=50");
-          const $pl = el("playlists");
-          $pl.innerHTML = "";
-          (data.items || []).forEach(pl => {
-            const btn = document.createElement("button");
-            btn.className = "pl-item";
-            btn.textContent = pl.name;
-            btn.dataset.id = pl.id;
-            btn.addEventListener("click", () => {
-              document.querySelectorAll(".pl-item").forEach(b => b.classList.remove("active"));
-              btn.classList.add("active");
-              loadPlaylistTracks(pl.id, pl.name);
-              closeSidebarOnMobile();
-            });
-            $pl.appendChild(btn);
-          });
-          if (!data.items || data.items.length === 0) {
-            $pl.innerHTML = `<div class="hint-row" style="padding:0 16px;">プレイリストがありません</div>`;
-          }
-        } catch (e) {
-          console.error(e);
-        }
-      }
-
-      async function loadPlaylistTracks(playlistId, name) {
-        renderEmpty("読み込み中…", "");
-        try {
-          const data = await api(`/playlists/${playlistId}/tracks?limit=100`);
-          const tracks = (data.items || []).map(i => i.track).filter(Boolean);
-          renderTrackList(name, tracks, tracks.map(t => t.uri), playlistId);
-        } catch (e) {
-          $view.innerHTML = renderBanner("プレイリストを読み込めませんでした。時間をおいて再度お試しください。");
-        }
-      }
-
-      function renderTrackList(title, tracks, uris, contextLabel) {
-        if (!tracks.length) {
-          renderEmpty("曲がありません", "このリストにはまだ曲が追加されていません。");
-          return;
-        }
-        const rows = tracks.map((t, i) => `
-    <div class="track-row" data-uri="${t.uri}" data-index="${i}">
-      <span class="t-num">${i + 1}</span>
-      <div class="t-main">
-        <img class="t-art" src="${(t.album && t.album.images && t.album.images.length) ? t.album.images[t.album.images.length - 1].url : ""}" alt="">
-        <div class="t-text">
-          <div class="t-title">${escapeHtml(t.name)}</div>
-          <div class="t-artist">${escapeHtml((t.artists || []).map(a => a.name).join(", "))}</div>
-        </div>
-      </div>
-      <div class="t-album">${escapeHtml(t.album ? t.album.name : "")}</div>
-      <div class="t-dur">${fmtTime(t.duration_ms)}</div>
+  <div id="sidebar" class="hidden">
+    <div class="brand"><span class="bolt"></span>SpotLightning</div>
+    <div class="sidebar-section-label">ライブラリ</div>
+    <div id="playlists"></div>
+    <div class="account-box">
+      <img id="user-avatar" src="" alt="">
+      <div class="name" id="user-name">-</div>
+      <button class="logout-btn" id="logout-btn">ログアウト</button>
     </div>
-  `).join("");
-        $view.innerHTML = `<h1 class="view-title">${escapeHtml(title)}</h1>${rows}`;
-        $view.querySelectorAll(".track-row").forEach(row => {
-          row.addEventListener("click", () => {
-            const idx = Number(row.dataset.index);
-            playUris(uris, idx);
-          });
-        });
-      }
+  </div>
 
-      function escapeHtml(s) {
-        return String(s || "").replace(/[&<>"']/g, c => ({
-          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-        }[c]));
-      }
+  <div id="main" class="hidden">
+    <div id="topbar">
+      <button id="menu-toggle">≡</button>
+      <form id="search-form">
+        <input id="search-input" type="text" placeholder="曲・アーティストを検索" autocomplete="off">
+      </form>
+    </div>
+    <div id="view"></div>
+  </div>
 
-      function closeSidebarOnMobile() {
-        if (window.innerWidth <= 760) $sidebar.classList.remove("open");
-      }
+  <div id="player-bar" class="hidden">
+    <div id="now-playing">
+      <div id="np-video-wrap"><div id="yt-player-mount"></div></div>
+      <div class="np-text">
+        <div class="np-title" id="np-title">再生していません</div>
+        <div class="np-artist" id="np-artist"></div>
+      </div>
+    </div>
+    <div id="transport">
+      <div id="transport-buttons">
+        <button id="prev-btn" title="前へ">⏮</button>
+        <button id="play-btn" title="再生/一時停止">▶</button>
+        <button id="next-btn" title="次へ">⏭</button>
+      </div>
+      <div id="progress-row">
+        <span id="time-cur">0:00</span>
+        <input id="seek" type="range" min="0" max="1000" value="0">
+        <span id="time-dur">0:00</span>
+      </div>
+    </div>
+    <div id="volume-row">
+      <span>♪</span>
+      <input id="volume" type="range" min="0" max="100" value="50">
+    </div>
+  </div>
 
-      // ---------------- Search ----------------
-      let searchDebounce = null;
-      el("search-form").addEventListener("submit", e => e.preventDefault());
-      el("search-input").addEventListener("input", e => {
-        clearTimeout(searchDebounce);
-        const q = e.target.value.trim();
-        if (!q) { renderEmpty("SpotLightning", "曲名やアーティスト名で検索するか、左のプレイリストを選んでください。"); return; }
-        searchDebounce = setTimeout(() => runSearch(q), 350);
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* =========================================================
+   SpotLightning — YouTube Music 版
+   軽量クライアント: Google Identity Services (OAuth token) + YouTube Data API v3 + IFrame Player API
+   外部フレームワーク・Webフォント不使用(起動速度優先)。認証/再生スクリプトのみ必要時に遅延読込
+   ========================================================= */
+
+// ---- Google Cloud ConsoleでOAuthクライアントを作成し、ここにClient IDを入れる (種類: ウェブアプリケーション) ----
+const CLIENT_ID = "YOUR_GOOGLE_OAUTH_CLIENT_ID";
+// -----------------------------------------------------------------------------------------
+
+const SCOPE = "https://www.googleapis.com/auth/youtube.readonly";
+const LS_TOKEN = "sl_yt_token";
+
+let state = {
+  accessToken: null,
+  expiresAt: 0,
+  tokenClient: null,
+  ytPlayer: null,
+  ytReady: false,
+  queue: [],       // [{id,title,artist,thumb,durationMs}]
+  queueIndex: -1,
+  isPaused: true,
+  seeking: false,
+};
+
+const el = (id) => document.getElementById(id);
+const $loginScreen = el("login-screen");
+const $sidebar = el("sidebar");
+const $main = el("main");
+const $playerBar = el("player-bar");
+const $view = el("view");
+
+// ---------------- Google Identity Services (OAuth token client) ----------------
+function loadScriptOnce(src){
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[src="' + src + '"]');
+    if (existing){ existing.dataset.loaded === "1" ? resolve() : existing.addEventListener("load", resolve); return; }
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = () => { s.dataset.loaded = "1"; resolve(); };
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+async function ensureGis(){
+  await loadScriptOnce("https://accounts.google.com/gsi/client");
+}
+
+function storeToken(access, expiresIn){
+  state.accessToken = access;
+  state.expiresAt = Date.now() + (expiresIn * 1000) - 60000;
+  sessionStorage.setItem(LS_TOKEN, JSON.stringify({ access, expiresAt: state.expiresAt }));
+}
+
+function loadStoredToken(){
+  try{
+    const raw = sessionStorage.getItem(LS_TOKEN);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (Date.now() >= data.expiresAt) return false;
+    state.accessToken = data.access;
+    state.expiresAt = data.expiresAt;
+    return true;
+  }catch(e){ return false; }
+}
+
+async function beginLogin(){
+  if (!CLIENT_ID || CLIENT_ID === "YOUR_GOOGLE_OAUTH_CLIENT_ID"){
+    const w = el("config-warning");
+    w.textContent = "Client IDが未設定です。コード内のCLIENT_IDにGoogle Cloud ConsoleのOAuthクライアントIDを設定してください。";
+    w.classList.remove("hidden");
+    return;
+  }
+  await ensureGis();
+  state.tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPE,
+    callback: (resp) => {
+      if (resp.error){ console.error(resp); return; }
+      storeToken(resp.access_token, resp.expires_in);
+      afterLogin();
+    },
+  });
+  state.tokenClient.requestAccessToken({ prompt: "consent" });
+}
+
+function logout(){
+  sessionStorage.removeItem(LS_TOKEN);
+  window.location.reload();
+}
+
+function requireReauth(){
+  $sidebar.classList.add("hidden");
+  $main.classList.add("hidden");
+  $playerBar.classList.add("hidden");
+  $loginScreen.classList.remove("hidden");
+  const w = el("config-warning");
+  w.textContent = "セッションの有効期限が切れました。もう一度ログインしてください。";
+  w.classList.remove("hidden");
+}
+
+// ---------------- YouTube Data API v3 ----------------
+async function api(path){
+  if (Date.now() >= state.expiresAt) { requireReauth(); throw new Error("token expired"); }
+  const res = await fetch("https://www.googleapis.com/youtube/v3" + path, {
+    headers: { "Authorization": "Bearer " + state.accessToken },
+  });
+  if (!res.ok){
+    const txt = await res.text().catch(()=> "");
+    throw new Error("API error " + res.status + " " + txt);
+  }
+  return res.json();
+}
+
+function parseIsoDurationMs(iso){
+  const m = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/.exec(iso || "");
+  if (!m) return 0;
+  const h = Number(m[1] || 0), min = Number(m[2] || 0), s = Number(m[3] || 0);
+  return ((h*3600) + (min*60) + s) * 1000;
+}
+
+async function hydrateVideos(items){
+  // items: [{id, title, artist, thumb}] -> attach durationMs via videos.list (batched, max 50 ids)
+  const ids = items.map(i => i.id).filter(Boolean);
+  if (!ids.length) return items;
+  const chunks = [];
+  for (let i=0;i<ids.length;i+=50) chunks.push(ids.slice(i, i+50));
+  const durMap = {};
+  for (const chunk of chunks){
+    const data = await api("/videos?part=contentDetails&id=" + chunk.join(","));
+    (data.items || []).forEach(v => { durMap[v.id] = parseIsoDurationMs(v.contentDetails.duration); });
+  }
+  items.forEach(i => { i.durationMs = durMap[i.id] || 0; });
+  return items;
+}
+
+// ---------------- UI shell ----------------
+function showApp(){
+  $loginScreen.classList.add("hidden");
+  $sidebar.classList.remove("hidden");
+  $main.classList.remove("hidden");
+  $playerBar.classList.remove("hidden");
+}
+
+function fmtTime(ms){
+  if (!ms || ms < 0) ms = 0;
+  const totalSec = Math.floor(ms/1000);
+  const m = Math.floor(totalSec/60);
+  const s = totalSec % 60;
+  return m + ":" + String(s).padStart(2, "0");
+}
+
+function renderEmpty(title, body){
+  $view.innerHTML = '<div class="empty-state"><strong>' + title + '</strong>' + body + '</div>';
+}
+
+function renderBanner(msg){
+  return '<div class="banner">' + msg + '</div>';
+}
+
+function escapeHtml(s){
+  return String(s || "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+// ---------------- Sidebar: playlists + liked videos ----------------
+async function loadPlaylists(){
+  const $pl = el("playlists");
+  $pl.innerHTML = "";
+
+  const likedBtn = document.createElement("button");
+  likedBtn.className = "pl-item";
+  likedBtn.textContent = "高評価した動画";
+  likedBtn.addEventListener("click", () => {
+    document.querySelectorAll(".pl-item").forEach(b=>b.classList.remove("active"));
+    likedBtn.classList.add("active");
+    loadPlaylistTracks("LL", "高評価した動画");
+    closeSidebarOnMobile();
+  });
+  $pl.appendChild(likedBtn);
+
+  try{
+    const data = await api("/playlists?part=snippet&mine=true&maxResults=50");
+    (data.items || []).forEach(pl => {
+      const btn = document.createElement("button");
+      btn.className = "pl-item";
+      btn.textContent = pl.snippet.title;
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".pl-item").forEach(b=>b.classList.remove("active"));
+        btn.classList.add("active");
+        loadPlaylistTracks(pl.id, pl.snippet.title);
+        closeSidebarOnMobile();
       });
+      $pl.appendChild(btn);
+    });
+  }catch(e){
+    console.error(e);
+  }
+}
 
-      async function runSearch(query) {
-        try {
-          const data = await api("/search?type=track&limit=30&q=" + encodeURIComponent(query));
-          const tracks = (data.tracks && data.tracks.items) || [];
-          if (!tracks.length) {
-            renderEmpty("見つかりませんでした", `「${escapeHtml(query)}」に一致する曲がありません。`);
-            return;
-          }
-          renderTrackList(`検索結果: ${query}`, tracks, tracks.map(t => t.uri));
-        } catch (e) {
-          $view.innerHTML = renderBanner("検索に失敗しました。しばらくしてから再度お試しください。");
-        }
-      }
+async function loadPlaylistTracks(playlistId, title){
+  renderEmpty("読み込み中…", "");
+  try{
+    const data = await api("/playlistItems?part=snippet&playlistId=" + playlistId + "&maxResults=50");
+    const items = (data.items || [])
+      .filter(i => i.snippet && i.snippet.resourceId && i.snippet.resourceId.videoId)
+      .map(i => ({
+        id: i.snippet.resourceId.videoId,
+        title: i.snippet.title,
+        artist: i.snippet.videoOwnerChannelTitle || i.snippet.channelTitle || "",
+        thumb: (i.snippet.thumbnails && (i.snippet.thumbnails.default || i.snippet.thumbnails.medium)) ? (i.snippet.thumbnails.default || i.snippet.thumbnails.medium).url : "",
+      }));
+    await hydrateVideos(items);
+    renderTrackList(title, items);
+  }catch(e){
+    console.error(e);
+    $view.innerHTML = renderBanner("読み込めませんでした。プレイリストが空か、非公開の可能性があります。");
+  }
+}
 
-      // ---------------- Playback (Web Playback SDK) ----------------
-      function loadSdkScript() {
-        return new Promise((resolve) => {
-          if (window.Spotify) { resolve(); return; }
-          const script = document.createElement("script");
-          script.src = "https://sdk.scdn.co/spotify-player.js";
-          document.head.appendChild(script);
-          window.onSpotifyWebPlaybackSDKReady = resolve;
-        });
-      }
+function renderTrackList(title, items){
+  if (!items.length){
+    renderEmpty("曲がありません", "このリストにはまだ曲が追加されていません。");
+    return;
+  }
+  const rows = items.map((t, i) => (
+    '<div class="track-row" data-index="' + i + '">' +
+      '<span class="t-num">' + (i+1) + '</span>' +
+      '<div class="t-main">' +
+        '<img class="t-art" src="' + t.thumb + '" alt="">' +
+        '<div class="t-text">' +
+          '<div class="t-title">' + escapeHtml(t.title) + '</div>' +
+          '<div class="t-artist">' + escapeHtml(t.artist) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="t-dur">' + fmtTime(t.durationMs) + '</div>' +
+    '</div>'
+  )).join("");
+  $view.innerHTML = '<h1 class="view-title">' + escapeHtml(title) + '</h1>' + rows;
+  $view.querySelectorAll(".track-row").forEach(row => {
+    row.addEventListener("click", () => {
+      const idx = Number(row.dataset.index);
+      playQueue(items, idx);
+    });
+  });
+}
 
-      async function initPlayer() {
-        await loadSdkScript();
-        const player = new Spotify.Player({
-          name: "SpotLightning",
-          getOAuthToken: async cb => { await ensureFreshToken(); cb(state.accessToken); },
-          volume: 0.5,
-        });
-        state.player = player;
+function closeSidebarOnMobile(){
+  if (window.innerWidth <= 760) $sidebar.classList.remove("open");
+}
 
-        player.addListener("ready", ({ device_id }) => {
-          state.deviceId = device_id;
-        });
-        player.addListener("not_ready", () => { state.deviceId = null; });
+// ---------------- Search ----------------
+let searchDebounce = null;
+el("search-form").addEventListener("submit", e => e.preventDefault());
+el("search-input").addEventListener("input", e => {
+  clearTimeout(searchDebounce);
+  const q = e.target.value.trim();
+  if (!q){ renderEmpty("SpotLightning", "曲名やアーティスト名で検索するか、左のライブラリを選んでください。"); return; }
+  searchDebounce = setTimeout(() => runSearch(q), 350);
+});
 
-        player.addListener("initialization_error", () => {
-          $view.innerHTML = renderBanner("このブラウザでは再生を初期化できませんでした。別のブラウザでお試しください。");
-        });
-        player.addListener("account_error", () => {
-          $view.innerHTML = renderBanner("再生にはSpotify Premiumアカウントが必要です。");
-        });
-        player.addListener("playback_error", (e) => {
-          console.error(e);
-        });
+async function runSearch(query){
+  renderEmpty("検索中…", "");
+  try{
+    const data = await api("/search?part=snippet&type=video&videoCategoryId=10&maxResults=25&q=" + encodeURIComponent(query));
+    const items = (data.items || [])
+      .filter(i => i.id && i.id.videoId)
+      .map(i => ({
+        id: i.id.videoId,
+        title: i.snippet.title,
+        artist: i.snippet.channelTitle,
+        thumb: (i.snippet.thumbnails && (i.snippet.thumbnails.default || i.snippet.thumbnails.medium)) ? (i.snippet.thumbnails.default || i.snippet.thumbnails.medium).url : "",
+      }));
+    if (!items.length){
+      renderEmpty("見つかりませんでした", '「' + escapeHtml(query) + '」に一致する曲がありません。');
+      return;
+    }
+    await hydrateVideos(items);
+    renderTrackList("検索結果: " + query, items);
+  }catch(e){
+    console.error(e);
+    $view.innerHTML = renderBanner("検索に失敗しました。しばらくしてから再度お試しください。");
+  }
+}
 
-        player.addListener("player_state_changed", (s) => {
-          if (!s) return;
-          state.isPaused = s.paused;
-          state.positionMs = s.position;
-          state.durationMs = s.duration;
-          state.currentTrack = s.track_window && s.track_window.current_track;
-          updatePlayerUI();
-        });
+// ---------------- Playback (YouTube IFrame Player API) ----------------
+// 注: YouTubeの利用規約により、再生中はプレーヤーを常に画面上に表示する必要があるため、
+// 音声のみを隠して再生することはせず、プレーヤー映像はミニサイズで常時表示しています。
+function loadIframeApi(){
+  return new Promise((resolve) => {
+    if (window.YT && window.YT.Player){ resolve(); return; }
+    window.onYouTubeIframeAPIReady = resolve;
+    const s = document.createElement("script");
+    s.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(s);
+  });
+}
 
-        await player.connect();
-      }
+async function initPlayer(){
+  await loadIframeApi();
+  state.ytPlayer = new YT.Player("yt-player-mount", {
+    height: "54",
+    width: "96",
+    playerVars: { autoplay: 0, controls: 0, rel: 0, playsinline: 1 },
+    events: {
+      onReady: () => { state.ytReady = true; },
+      onStateChange: onPlayerStateChange,
+      onError: (e) => { console.error("YT player error", e); },
+    },
+  });
+}
 
-      async function playUris(uris, offsetIndex) {
-        if (!state.deviceId) {
-          $view.innerHTML = renderBanner("再生の準備中です。少し待ってからもう一度お試しください。") + $view.innerHTML;
-          return;
-        }
-        try {
-          await api(`/me/player/play?device_id=${state.deviceId}`, {
-            method: "PUT",
-            body: JSON.stringify({ uris, offset: { position: offsetIndex || 0 } }),
-          });
-        } catch (e) {
-          console.error(e);
-        }
-      }
+function onPlayerStateChange(e){
+  if (e.data === YT.PlayerState.PLAYING){ state.isPaused = false; }
+  if (e.data === YT.PlayerState.PAUSED){ state.isPaused = true; }
+  if (e.data === YT.PlayerState.ENDED){ nextTrack(); }
+  updateTransportUI();
+}
 
-      function updatePlayerUI() {
-        const t = state.currentTrack;
-        el("play-btn").textContent = state.isPaused ? "▶" : "⏸";
-        if (t) {
-          el("np-title").textContent = t.name;
-          el("np-artist").textContent = (t.artists || []).map(a => a.name).join(", ");
-          el("np-art").src = (t.album && t.album.images && t.album.images[0]) ? t.album.images[0].url : "";
-        }
-        el("time-cur").textContent = fmtTime(state.positionMs);
-        el("time-dur").textContent = fmtTime(state.durationMs);
-        if (!state.seeking && state.durationMs) {
-          el("seek").value = Math.round((state.positionMs / state.durationMs) * 1000);
-        }
-        document.querySelectorAll(".track-row").forEach(row => {
-          row.classList.toggle("playing", !!(t && row.dataset.uri === t.uri) && !state.isPaused);
-        });
-      }
+function playQueue(items, index){
+  state.queue = items;
+  state.queueIndex = index;
+  playCurrent();
+}
 
-      // tick the progress bar between state updates
-      setInterval(() => {
-        if (!state.player || state.isPaused || state.seeking) return;
-        state.positionMs = Math.min(state.positionMs + 500, state.durationMs);
-        el("time-cur").textContent = fmtTime(state.positionMs);
-        if (state.durationMs) {
-          el("seek").value = Math.round((state.positionMs / state.durationMs) * 1000);
-        }
-      }, 500);
+function playCurrent(){
+  const track = state.queue[state.queueIndex];
+  if (!track || !state.ytPlayer) return;
+  state.ytPlayer.loadVideoById(track.id);
+  state.isPaused = false;
+  el("np-title").textContent = track.title;
+  el("np-artist").textContent = track.artist;
+  document.querySelectorAll(".track-row").forEach((row, i) => {
+    row.classList.toggle("playing", i === state.queueIndex);
+  });
+  updateTransportUI();
+}
 
-      // ---------------- Transport controls ----------------
-      el("play-btn").addEventListener("click", () => state.player && state.player.togglePlay());
-      el("next-btn").addEventListener("click", () => state.player && state.player.nextTrack());
-      el("prev-btn").addEventListener("click", () => state.player && state.player.previousTrack());
+function nextTrack(){
+  if (state.queueIndex < state.queue.length - 1){
+    state.queueIndex++;
+    playCurrent();
+  }
+}
+function prevTrack(){
+  if (state.queueIndex > 0){
+    state.queueIndex--;
+    playCurrent();
+  }
+}
+function togglePlay(){
+  if (!state.ytPlayer) return;
+  if (state.isPaused){ state.ytPlayer.playVideo(); } else { state.ytPlayer.pauseVideo(); }
+}
 
-      const $seek = el("seek");
-      $seek.addEventListener("mousedown", () => state.seeking = true);
-      $seek.addEventListener("touchstart", () => state.seeking = true);
-      $seek.addEventListener("change", async () => {
-        if (!state.durationMs) { state.seeking = false; return; }
-        const ratio = Number($seek.value) / 1000;
-        const positionMs = Math.round(ratio * state.durationMs);
-        try { await state.player.seek(positionMs); } catch (e) { }
-        state.positionMs = positionMs;
-        state.seeking = false;
-      });
+function updateTransportUI(){
+  el("play-btn").textContent = state.isPaused ? "▶" : "⏸";
+  el("prev-btn").disabled = state.queueIndex <= 0;
+  el("next-btn").disabled = state.queueIndex < 0 || state.queueIndex >= state.queue.length - 1;
+}
 
-      el("volume").addEventListener("input", (e) => {
-        if (!state.player) return;
-        state.player.setVolume(Number(e.target.value) / 100);
-      });
+// progress polling (IFrame API has no push events for time updates)
+setInterval(() => {
+  if (!state.ytReady || !state.ytPlayer || state.seeking || state.queueIndex < 0) return;
+  try{
+    const cur = state.ytPlayer.getCurrentTime() * 1000;
+    const dur = state.ytPlayer.getDuration() * 1000;
+    el("time-cur").textContent = fmtTime(cur);
+    el("time-dur").textContent = fmtTime(dur);
+    if (dur > 0) el("seek").value = Math.round((cur / dur) * 1000);
+  }catch(e){}
+}, 500);
 
-      el("menu-toggle").addEventListener("click", () => $sidebar.classList.toggle("open"));
-      el("logout-btn").addEventListener("click", logout);
-      el("login-btn").addEventListener("click", beginLogin);
+// ---------------- Transport controls ----------------
+el("play-btn").addEventListener("click", togglePlay);
+el("next-btn").addEventListener("click", nextTrack);
+el("prev-btn").addEventListener("click", prevTrack);
 
-      // ---------------- Boot sequence ----------------
-      async function boot() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get("code");
+const $seek = el("seek");
+$seek.addEventListener("mousedown", () => state.seeking = true);
+$seek.addEventListener("touchstart", () => state.seeking = true);
+$seek.addEventListener("change", () => {
+  if (!state.ytPlayer || state.queueIndex < 0){ state.seeking = false; return; }
+  try{
+    const dur = state.ytPlayer.getDuration();
+    const ratio = Number($seek.value) / 1000;
+    state.ytPlayer.seekTo(ratio * dur, true);
+  }catch(e){}
+  state.seeking = false;
+});
 
-        if (code) {
-          try {
-            const data = await exchangeCodeForToken(code);
-            storeToken(data.access_token, data.refresh_token, data.expires_in);
-            window.history.replaceState({}, "", REDIRECT_URI);
-          } catch (e) {
-            console.error(e);
-          }
-        } else {
-          loadStoredToken();
-        }
+el("volume").addEventListener("input", (e) => {
+  if (state.ytPlayer) state.ytPlayer.setVolume(Number(e.target.value));
+});
 
-        if (!state.accessToken) {
-          return; // stays on login screen
-        }
+el("menu-toggle").addEventListener("click", () => $sidebar.classList.toggle("open"));
+el("logout-btn").addEventListener("click", logout);
+el("login-btn").addEventListener("click", beginLogin);
 
-        try {
-          await ensureFreshToken();
-        } catch (e) {
-          return;
-        }
+// ---------------- Boot ----------------
+async function afterLogin(){
+  showApp();
+  renderEmpty("SpotLightning", "曲名やアーティスト名で検索するか、左のライブラリを選んでください。");
+  try{
+    const data = await api("/channels?part=snippet&mine=true");
+    const ch = data.items && data.items[0];
+    if (ch){
+      el("user-name").textContent = ch.snippet.title;
+      el("user-avatar").src = ch.snippet.thumbnails.default.url;
+    }
+  }catch(e){}
+  loadPlaylists();
+  initPlayer();
+}
 
-        showApp();
-        renderEmpty("SpotLightning", "曲名やアーティスト名で検索するか、左のプレイリストを選んでください。");
+async function boot(){
+  if (loadStoredToken()){
+    afterLogin();
+  }
+  // stays on login screen otherwise
+}
 
-        try {
-          const me = await api("/me");
-          el("user-name").textContent = me.display_name || me.id;
-          el("user-avatar").src = (me.images && me.images[0]) ? me.images[0].url : "";
-        } catch (e) { }
+boot();
 
-        loadPlaylists();
-        initPlayer();
-      }
-
-      boot();
-
-    })();
-  </script>
+})();
+</script>
 </body>
-
 </html>
