@@ -279,30 +279,39 @@
 
 </div>
 
-<script>
-(function(){
-"use strict";
-
+<script type="module">
 /* =========================================================
-   SpotLightning — YouTube Music 版
-   軽量クライアント: Google Identity Services (OAuth token) + YouTube Data API v3 + IFrame Player API
-   外部フレームワーク・Webフォント不使用(起動速度優先)。認証/再生スクリプトのみ必要時に遅延読込
+   SpotLightning — YouTube Music 版 (Firebaseプロジェクト対応)
+   Firebase Hosting + Firebase Authentication(Googleプロバイダ + YouTube閲覧スコープ) + YouTube Data API v3 + IFrame Player API
+   外部フレームワーク・Webフォント不使用。Firebase SDKはモジュール版(必要な機能のみ)を使用
    ========================================================= */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 
-// ---- Google Cloud ConsoleでOAuthクライアントを作成し、ここにClient IDを入れる (種類: ウェブアプリケーション) ----
-const CLIENT_ID = "YOUR_GOOGLE_OAUTH_CLIENT_ID";
+// ---- Firebaseコンソール > プロジェクトの設定 > マイアプリ から取得した設定値をここに入れる ----
+const firebaseConfig = {
+  apiKey: "AIzaSyAC0-9XrzUGajNUY4arbHGzMt3ALbyjDbs",
+  authDomain: "a4l-f5-si.firebaseapp.com",
+  projectId: "a4l-f5-si",
+  storageBucket: "a4l-f5-si.firebasestorage.app",
+  messagingSenderId: "1067513157556",
+  appId: "1:1067513157556:web:38ea17c9a54391775644e1",
+  measurementId: "G-C3PH30YJBT"
+};
 // -----------------------------------------------------------------------------------------
 
-const SCOPE = "https://www.googleapis.com/auth/youtube.readonly";
+const YT_SCOPE = "https://www.googleapis.com/auth/youtube.readonly";
 const LS_TOKEN = "sl_yt_token";
 
+let app, auth, provider;
 let state = {
   accessToken: null,
   expiresAt: 0,
-  tokenClient: null,
   ytPlayer: null,
   ytReady: false,
-  queue: [],       // [{id,title,artist,thumb,durationMs}]
+  queue: [],
   queueIndex: -1,
   isPaused: true,
   seeking: false,
@@ -315,26 +324,33 @@ const $main = el("main");
 const $playerBar = el("player-bar");
 const $view = el("view");
 
-// ---------------- Google Identity Services (OAuth token client) ----------------
-function loadScriptOnce(src){
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector('script[src="' + src + '"]');
-    if (existing){ existing.dataset.loaded === "1" ? resolve() : existing.addEventListener("load", resolve); return; }
-    const s = document.createElement("script");
-    s.src = src;
-    s.onload = () => { s.dataset.loaded = "1"; resolve(); };
-    s.onerror = reject;
-    document.head.appendChild(s);
+function isConfigured(){
+  return firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_FIREBASE_API_KEY";
+}
+
+function showConfigWarning(msg){
+  const w = el("config-warning");
+  w.textContent = msg;
+  w.classList.remove("hidden");
+}
+
+// ---------------- Firebase Auth (Google provider + YouTube scope) ----------------
+function initFirebase(){
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  provider = new GoogleAuthProvider();
+  provider.addScope(YT_SCOPE);
+  onAuthStateChanged(auth, (user) => {
+    if (user){
+      el("user-name").textContent = user.displayName || user.email || "";
+      el("user-avatar").src = user.photoURL || "";
+    }
   });
 }
 
-async function ensureGis(){
-  await loadScriptOnce("https://accounts.google.com/gsi/client");
-}
-
-function storeToken(access, expiresIn){
+function storeToken(access, expiresInSec){
   state.accessToken = access;
-  state.expiresAt = Date.now() + (expiresIn * 1000) - 60000;
+  state.expiresAt = Date.now() + (expiresInSec * 1000) - 60000;
   sessionStorage.setItem(LS_TOKEN, JSON.stringify({ access, expiresAt: state.expiresAt }));
 }
 
@@ -351,28 +367,29 @@ function loadStoredToken(){
 }
 
 async function beginLogin(){
-  if (!CLIENT_ID || CLIENT_ID === "YOUR_GOOGLE_OAUTH_CLIENT_ID"){
-    const w = el("config-warning");
-    w.textContent = "Client IDが未設定です。コード内のCLIENT_IDにGoogle Cloud ConsoleのOAuthクライアントIDを設定してください。";
-    w.classList.remove("hidden");
+  if (!isConfigured()){
+    showConfigWarning("Firebase設定が未入力です。コード内のfirebaseConfigにFirebaseコンソールの値を設定してください。");
     return;
   }
-  await ensureGis();
-  state.tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPE,
-    callback: (resp) => {
-      if (resp.error){ console.error(resp); return; }
-      storeToken(resp.access_token, resp.expires_in);
-      afterLogin();
-    },
-  });
-  state.tokenClient.requestAccessToken({ prompt: "consent" });
+  try{
+    const result = await signInWithPopup(auth, provider);
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    if (!credential || !credential.accessToken){
+      showConfigWarning("Googleからアクセストークンを取得できませんでした。もう一度お試しください。");
+      return;
+    }
+    // Googleの提供トークンの有効期限は明示されないため、標準的な1時間として扱う
+    storeToken(credential.accessToken, 3600);
+    afterLogin();
+  }catch(e){
+    console.error(e);
+    showConfigWarning("ログインに失敗しました。承認済みドメインの設定などをご確認ください。");
+  }
 }
 
 function logout(){
   sessionStorage.removeItem(LS_TOKEN);
-  window.location.reload();
+  signOut(auth).finally(() => window.location.reload());
 }
 
 function requireReauth(){
@@ -380,9 +397,7 @@ function requireReauth(){
   $main.classList.add("hidden");
   $playerBar.classList.add("hidden");
   $loginScreen.classList.remove("hidden");
-  const w = el("config-warning");
-  w.textContent = "セッションの有効期限が切れました。もう一度ログインしてください。";
-  w.classList.remove("hidden");
+  showConfigWarning("セッションの有効期限が切れました。もう一度ログインしてください。");
 }
 
 // ---------------- YouTube Data API v3 ----------------
@@ -406,7 +421,6 @@ function parseIsoDurationMs(iso){
 }
 
 async function hydrateVideos(items){
-  // items: [{id, title, artist, thumb}] -> attach durationMs via videos.list (batched, max 50 ids)
   const ids = items.map(i => i.id).filter(Boolean);
   if (!ids.length) return items;
   const chunks = [];
@@ -439,11 +453,9 @@ function fmtTime(ms){
 function renderEmpty(title, body){
   $view.innerHTML = '<div class="empty-state"><strong>' + title + '</strong>' + body + '</div>';
 }
-
 function renderBanner(msg){
   return '<div class="banner">' + msg + '</div>';
 }
-
 function escapeHtml(s){
   return String(s || "").replace(/[&<>"']/g, c => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -646,7 +658,6 @@ function updateTransportUI(){
   el("next-btn").disabled = state.queueIndex < 0 || state.queueIndex >= state.queue.length - 1;
 }
 
-// progress polling (IFrame API has no push events for time updates)
 setInterval(() => {
   if (!state.ytReady || !state.ytPlayer || state.seeking || state.queueIndex < 0) return;
   try{
@@ -685,31 +696,21 @@ el("logout-btn").addEventListener("click", logout);
 el("login-btn").addEventListener("click", beginLogin);
 
 // ---------------- Boot ----------------
-async function afterLogin(){
+function afterLogin(){
   showApp();
   renderEmpty("SpotLightning", "曲名やアーティスト名で検索するか、左のライブラリを選んでください。");
-  try{
-    const data = await api("/channels?part=snippet&mine=true");
-    const ch = data.items && data.items[0];
-    if (ch){
-      el("user-name").textContent = ch.snippet.title;
-      el("user-avatar").src = ch.snippet.thumbnails.default.url;
-    }
-  }catch(e){}
   loadPlaylists();
   initPlayer();
 }
 
-async function boot(){
+function boot(){
+  initFirebase();
   if (loadStoredToken()){
     afterLogin();
   }
-  // stays on login screen otherwise
 }
 
 boot();
-
-})();
 </script>
 </body>
 </html>
