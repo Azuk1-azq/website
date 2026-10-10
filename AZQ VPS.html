@@ -54,7 +54,7 @@ h2{font-size:clamp(26px,4vw,36px);letter-spacing:-.025em;margin:0 0 8px;font-wei
 .uses div:nth-last-child(-n+2){border-bottom:0}
 .uses b{display:block;font:700 17px "Plus Jakarta Sans","Noto Sans JP",sans-serif;margin-bottom:2px}
 .uses span{color:var(--muted);font-size:14.5px}
-.plans{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .plan{background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:26px;box-shadow:var(--shadow);position:relative;display:flex;flex-direction:column}
 .plan.free{grid-column:1/-1;display:grid;grid-template-columns:1.1fr 1.3fr 1.3fr .9fr;gap:28px;align-items:center;padding:28px 32px;border-color:var(--accent)}
 .plan.free .price{margin:0}.plan.free .spec{margin:0}
@@ -71,8 +71,8 @@ h2{font-size:clamp(26px,4vw,36px);letter-spacing:-.025em;margin:0 0 8px;font-wei
 .modal h3{font-size:22px;margin:0 0 6px;letter-spacing:-.02em}
 .modal p{margin:0 0 20px;color:var(--muted)}
 .modal .who{display:inline-block;font:500 15px "JetBrains Mono",monospace;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);padding:8px 14px;border-radius:10px;margin:2px 0 6px}
-@media (max-width:1000px){.plans{grid-template-columns:repeat(2,1fr)}.plan.free{grid-template-columns:1fr;gap:20px}}
-@media (max-width:560px){.plans{grid-template-columns:1fr}}
+@media (max-width:1000px){.plan.free{grid-template-columns:1fr;gap:20px}}
+@media (max-width:720px){.plans{grid-template-columns:1fr}}
 .tag{display:inline-block;font:700 12.5px "Plus Jakarta Sans",sans-serif;background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok);padding:5px 12px;border-radius:99px}
 .plan h3{font-size:26px;margin:14px 0 4px;letter-spacing:-.02em}
 .price{display:flex;gap:28px;margin:18px 0 22px;padding:18px 0;border-block:1px solid var(--line)}
@@ -85,7 +85,7 @@ h2{font-size:clamp(26px,4vw,36px);letter-spacing:-.025em;margin:0 0 8px;font-wei
 .plan .btn{width:100%;padding:17px}
 footer{padding:36px 0 48px;color:var(--muted);font-size:13.5px;text-align:center}
 /* flow pages */
-#order,#checkout,#loading,#contact{display:none}
+#order,#checkout,#loading{display:none}
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
 .steps{display:flex;align-items:center;justify-content:center;gap:12px;margin:36px 0 8px;font:700 13.5px "Plus Jakarta Sans","Noto Sans JP",sans-serif;color:var(--muted);flex-wrap:wrap}
 .steps span{display:flex;align-items:center;gap:8px}
@@ -181,7 +181,7 @@ footer{padding:36px 0 48px;color:var(--muted);font-size:13.5px;text-align:center
 
     <section id="plan">
       <h2 style="text-align:center">プラン</h2>
-      <p class="lead" style="text-align:center">無料プランと、24時間稼働の有料プランから選べます。</p>
+      <p class="lead" style="text-align:center">好きな無料プランを選べます。</p>
       <div class="plans">
         <div class="plan free">
           <div><span class="tag">無料</span><h3 style="margin-bottom:0">Premium Free</h3></div>
@@ -197,28 +197,22 @@ footer{padding:36px 0 48px;color:var(--muted);font-size:13.5px;text-align:center
           <button class="btn" onclick="buy()">このプランを購入</button>
         </div>
         <div class="plan paid">
-          <div><span class="tag hr">24h</span></div><h3>Mini</h3>
-          <div class="price"><div>200円<small>/月</small></div><div>2,000円<small>/年</small></div></div>
+          <div><span class="tag">無料</span></div><h3>Free Mini</h3>
+          <div class="price"><div>0円<small>/月</small></div><div>0円<small>/年</small></div></div>
           <ul class="spec"><li><span>RAM</span><span>256MB</span></li><li><span>CPU</span><span>0.25vCPU</span></li><li><span>容量</span><span>2GB</span></li></ul>
-          <button class="btn" onclick="paid('Mini','200円/月・2,000円/年')">購入する</button>
+          <button class="btn" onclick="start('Mini')">このプランを購入</button>
         </div>
         <div class="plan paid">
-          <div><span class="tag hr">24h</span></div><h3>Basic</h3>
-          <div class="price"><div>400円<small>/月</small></div><div>4,000円<small>/年</small></div></div>
+          <div><span class="tag">無料</span></div><h3>Free Basic</h3>
+          <div class="price"><div>0円<small>/月</small></div><div>0円<small>/年</small></div></div>
           <ul class="spec"><li><span>RAM</span><span>512MB</span></li><li><span>CPU</span><span>0.5vCPU</span></li><li><span>容量</span><span>5GB</span></li></ul>
-          <button class="btn" onclick="paid('Basic','400円/月・4,000円/年')">購入する</button>
+          <button class="btn" onclick="start('Basic')">このプランを購入</button>
         </div>
         <div class="plan paid">
-          <div><span class="tag hr">24h</span></div><h3>Standard</h3>
-          <div class="price"><div>700円<small>/月</small></div><div>7,000円<small>/年</small></div></div>
+          <div><span class="tag">無料</span></div><h3>Free Standard</h3>
+          <div class="price"><div>0円<small>/月</small></div><div>0円<small>/年</small></div></div>
           <ul class="spec"><li><span>RAM</span><span>1GB</span></li><li><span>CPU</span><span>1vCPU</span></li><li><span>容量</span><span>10GB</span></li></ul>
-          <button class="btn" onclick="paid('Standard','700円/月・7,000円/年')">購入する</button>
-        </div>
-        <div class="plan paid">
-          <div><span class="tag hr">24h</span></div><h3>Pro</h3>
-          <div class="price"><div>900円<small>/月</small></div><div>9,000円<small>/年</small></div></div>
-          <ul class="spec"><li><span>RAM</span><span>2GB</span></li><li><span>CPU</span><span>1〜2vCPU</span></li><li><span>容量</span><span>20GB</span></li></ul>
-          <button class="btn" onclick="paid('Pro','900円/月・9,000円/年')">購入する</button>
+          <button class="btn" onclick="start('Standard')">このプランを購入</button>
         </div>
       </div>
     </section>
@@ -261,25 +255,6 @@ footer{padding:36px 0 48px;color:var(--muted);font-size:13.5px;text-align:center
   </div></div>
 </main>
 
-<main id="contact">
-  <div class="wrap">
-    <div class="receipt">
-      <div class="top">
-        <div class="check warn">!</div>
-        <h2>お問い合わせが必要です</h2>
-        <p>有料プランのご購入にはお問い合わせが必要です。</p>
-      </div>
-      <div class="rows">
-        <div><span>プラン</span><span id="kplan"></span></div>
-        <div><span>スペック</span><span id="kspec"></span></div>
-        <div><span>合計</span><span id="kamt"></span></div>
-      </div>
-      <div class="notice"><b>azuk1_devにお問い合わせしてください</b><p>お問い合わせのあと、お申し込みを進めます。</p></div>
-      <div class="acts"><button class="btn sm" onclick="show('home')">プラン選択に戻る</button></div>
-    </div>
-  </div>
-</main>
-
 <main id="order">
   <div class="wrap">
     <div class="receipt">
@@ -311,7 +286,7 @@ footer{padding:36px 0 48px;color:var(--muted);font-size:13.5px;text-align:center
 <script>
 const $=id=>document.getElementById(id);
 function show(v){
-  ['home','checkout','loading','order','contact'].forEach(k=>{$(k).style.display=k===v?'block':'none'});
+  ['home','checkout','loading','order'].forEach(k=>{$(k).style.display=k===v?'block':'none'});
   window.scrollTo({top:0});
 }
 function buy(){start('free')}
@@ -333,14 +308,12 @@ function copyId(){
 }
 const PL={
  free:{n:'Premium Free',m:0,y:0,spec:'RAM 512GB (FREE) / CPU 2 CORE',free:1},
- Mini:{n:'Mini(24h)',m:200,y:2000,spec:'256MB RAM / 0.25vCPU / 2GB'},
- Basic:{n:'Basic(24h)',m:400,y:4000,spec:'512MB RAM / 0.5vCPU / 5GB'},
- Standard:{n:'Standard(24h)',m:700,y:7000,spec:'1GB RAM / 1vCPU / 10GB'},
- Pro:{n:'Pro(24h)',m:900,y:9000,spec:'2GB RAM / 1〜2vCPU / 20GB'}
+ Mini:{n:'Free Mini',m:0,y:0,spec:'256MB RAM / 0.25vCPU / 2GB',free:1},
+ Basic:{n:'Free Basic',m:0,y:0,spec:'512MB RAM / 0.5vCPU / 5GB',free:1},
+ Standard:{n:'Free Standard',m:0,y:0,spec:'1GB RAM / 1vCPU / 10GB',free:1}
 };
 let S=PL.free,per='m';
 const yen=n=>n.toLocaleString('ja-JP')+'円';
-function paid(k){start(k)}
 function start(k){
   S=PL[k];per='m';
   document.querySelector('input[name=per][value=m]').checked=true;
@@ -365,12 +338,7 @@ function pay(){
     if(p>=100){clearInterval(t);setTimeout(done,250)}
   },55);
 }
-function done(){
-  if(S.free){place();return}
-  $('kplan').textContent=S.n;$('kspec').textContent=S.spec;
-  $('kamt').textContent=yen(per==='m'?S.m:S.y)+(per==='m'?'/月':'/年');
-  show('contact');
-}
+function done(){place()}
 document.querySelector('.brand').addEventListener('keydown',e=>{if(e.key==='Enter')show('home')});
 
 // hero terminal
